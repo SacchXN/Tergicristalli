@@ -175,8 +175,6 @@ async def on_ready():
     for guild in bot.guilds:
       print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
     print("####################################\n")
-      #for member in guild.members:
-      #      print(member.name)
 
 @bot.command()
 async def help(ctx):
