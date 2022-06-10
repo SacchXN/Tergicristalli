@@ -1,5 +1,5 @@
 # Tergicristalli
-Discord bot for parsing FFXIV logs and creating charts out of them for progress tracking.
+Discord bot for parsing FFXIV logs and creating charts out of them for progress tracking.\
 Invite link: https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot
 
 #### %plot_s
