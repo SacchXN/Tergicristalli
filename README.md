@@ -1,29 +1,32 @@
 # Tergicristalli
-Discord bot for parsing FFXIV logs and creating charts out of them for progress tracking.\
-Invite link: https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot
+Tergicristalli is a bot that allows you to transform your log(s) into bar and pie charts in order to have a better view of how your session was.\
+### General information
+- Author: Sekkeisha#5511
+- Invite link: https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot
+### How to use
+The command **%load** allows you to load the logs you want to analyze and once the bot replies with *Logs correctly loaded.* you are ready to choose what chart to create.
 
-#### %plot_s
-%plot_s creates for every single log used as input a bar chart showing on what phase every single pull ended and a pie chart showing how much time (percentage and minute wise) was spent on every phase.
-###### Syntax
-%plot_s https://www.fflogs.com/reports/abcde/,https://www.fflogs.com/reports/vwxyz/
+#### %plot s_bar
+Bar chart for each log uploaded showing for each pull what was its pull length and wipe phase.
+![picture](https://user-images.githubusercontent.com/106769040/174461487-7eafa9f4-76b6-45bb-9dc2-a8ae692bda46.png)
 
-### Bar chart example
-![picture](https://user-images.githubusercontent.com/106769040/171700147-edf9211b-112b-450f-8d0d-971e09ca3c75.png)
+#### %plot s_pie
+Pie chart for each log uploaded showing the percentage of time (in minutes) spent for each phase.
+![picture](https://user-images.githubusercontent.com/106769040/174461505-d8ede59f-844f-4c46-b98a-c6c676eaad75.png)
 
-### Pie chart example
-![picture](https://user-images.githubusercontent.com/106769040/171712143-6d7cd4b9-9edf-4946-9152-d57f4fe16db1.png)
+#### %plot m_bar_split
+Bar chart for all loaded logs showing for each pull what was its pull length and wipe phase.
+![picture](https://user-images.githubusercontent.com/106769040/174461530-4977b472-3c45-4727-a242-651fd3eaa964.png)
 
-### Pulls length example
-![picture](https://user-images.githubusercontent.com/106769040/173162915-ef91c40b-b482-470b-b0ab-7045b1b24536.png)
+#### %plot m_bar_compact
+Bar chart showing for each day the amount of wipe pulls for each phase.
+![picture](https://user-images.githubusercontent.com/106769040/174461963-fc6389d9-0012-4a39-a426-601051e139e1.png)
 
-#### %plot_m
-%plot_m creates a single bar chart showing the number of wipes in every phase for every log used as input and a single pie chart showing how much time (percentage and minute wise) was spent on every phase.
+#### %plot m_pie
+Pie chart for all loaded logs showing the percentage of time (in minutes) spent for each phase.
+![picture](https://user-images.githubusercontent.com/106769040/174461982-398a90ee-7ec8-4fcd-8d60-284e98f05107.png)
 
-###### Syntax
-%plot_m https://www.fflogs.com/reports/abcde/,https://www.fflogs.com/reports/vwxyz/
-
-### Bar chart example
-![picture](https://user-images.githubusercontent.com/106769040/171704141-dfc5e123-b60b-4cad-a4b0-383c7d44498b.png)
-
-### Pie chart example
-![picture](https://user-images.githubusercontent.com/106769040/171711567-1a3763e1-b9e7-410a-b531-6fbdd3d64da7.png)
+#### Dark theme
+![picture](https://user-images.githubusercontent.com/106769040/174462013-02898ef9-2eb5-4a4a-975b-44560f7f1cd8.png)
+![picture](https://user-images.githubusercontent.com/106769040/174462026-a254fec4-a705-4294-82b9-6ff0e95bec7e.png)
+![picture](https://user-images.githubusercontent.com/106769040/174462027-bcc7671b-1a83-4300-975c-cdfb6fb4eb61.png)
