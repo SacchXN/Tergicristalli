@@ -1,5 +1,5 @@
 # Tergicristalli
-Tergicristalli is a bot that allows you to transform your log(s) into bar and pie charts in order to have a better view of how your session was.\
+Tergicristalli is a bot that allows you to transform your log(s) into bar and pie charts in order to have a better view of how your session was.
 ### General information
 - Author: Sekkeisha#5511
 - Invite link: https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot
