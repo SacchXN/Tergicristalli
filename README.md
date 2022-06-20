@@ -4,7 +4,11 @@ Tergicristalli is a bot that allows you to transform your log(s) into bar and pi
 - Author: Sekkeisha#5511
 - Invite link: https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot
 ### How to use
-The command **%load** allows you to load the logs you want to analyze and once the bot replies with "*Logs correctly loaded.*" you are ready to choose what chart to create.
+The command **%load** allows you to load the logs you want to analyze.\
+Example: %load https://www.fflogs.com/reports/0123456789abcdef/,https://www.fflogs.com/reports/abcdef0123456789/ \
+Once the bot replies with "*Logs correctly loaded.*" you can now select what fight you want to analyze using **%encounter**.\
+Example: %encounter dsr \
+You can choose between **ucob**, **uwu**, **tea** and **dsr**. It is now possible to decide what chart you want to create.
 
 #### %plot s_bar
 Bar chart for each log uploaded showing for each pull what was its pull length and wipe phase.
