@@ -15,10 +15,10 @@ TOKEN = os.getenv('TOKEN')
 AUTH = os.getenv('AUTH')
 
 
-def get_pulls(log):
+def get_pulls(log, encounter_id):
     conn = http.client.HTTPSConnection("www.fflogs.com")
 
-    payload = "{\"query\":\"query{\\n  reportData{\\n\\t\\treport(code: \\\"" + log + "\\\"){\\n\\t\\t\\tstartTime\\n\\t\\t\\tfights(encounterID: 1065){\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\tlastPhase\\n\\t\\t\\t\\tlastPhaseIsIntermission\\n\\t\\t\\t\\tstartTime\\n\\t\\t\\t\\tendTime\\n\\t\\t\\t\\t}\\n\\t\\t}\\n\\t}\\n}\\n\\t\"}"
+    payload = "{\"query\":\"query{\\n  reportData{\\n\\t\\treport(code: \\\"" + log + "\\\"){\\n\\t\\t\\tstartTime\\n\\t\\t\\tfights(encounterID:" + encounter_id + "){\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\tlastPhase\\n\\t\\t\\t\\tlastPhaseIsIntermission\\n\\t\\t\\t\\tstartTime\\n\\t\\t\\t\\tendTime\\n\\t\\t\\t\\t}\\n\\t\\t}\\n\\t}\\n}\\n\\t\"}"
 
     headers = {
         'Content-Type': "application/json",
@@ -42,7 +42,10 @@ def get_pulls(log):
         if not item["lastPhaseIsIntermission"]:
             pulls.append([item["lastPhase"], time])
         else:
-            pulls.append([4.5, time])
+            if encounter_id == "1065":
+                pulls.append([4.5, time])
+            else:
+                pulls.append([item["lastPhase"] + 0.5, time])
     return day, pulls
 
 
@@ -157,7 +160,7 @@ def multi_bar_compact(fight, days, pulls):
     # For each phase there is an array of value whose elements are the number of wipes in that phase and the indeces
     # are the days in the logs given order.
 
-    p = {1: [], 2: [], 3: [], 4: [], 4.5: [], 5: [], 6: [], 7: []}
+    p = {phase: [] for phase in fight.keys()}
     for day in pulls.keys():
         for phase in fight.keys():
             p[phase].append([pull[0] for pull in pulls[day].values()].count(phase))
@@ -206,7 +209,7 @@ def multi_bar_split(fight, days, pulls):
     for day in days_number:
         for offset, pull in zip(np.arange(-0.175 * (len(pulls[day])) / 2, 0.175 * (len(pulls[day])) / 2, 0.175),
                                 [p for p in pulls[day].values()]):
-            chart.bar(days_number[day] + offset, pull[1]/60, width=0.1, color=fights_filtered[pull[0]][1])
+            chart.bar(days_number[day] + offset, pull[1] / 60, width=0.1, color=fights_filtered[pull[0]][1])
 
     chart.set_ylabel("Pull length")
     chart.set_xticks([v for v in days_number.values()])
@@ -244,23 +247,51 @@ def multi_pie(fight, pulls):
     return buf
 
 
-fights = {"dsr": {1: ["A&C&G", "#EF9958"],
-                  2: ["Thordan 1", "#62C562"],
-                  3: ["Nidhogg", "#E20000"],
-                  4: ["Eyes", "#D4F5EF"],
-                  4.5: ["Rewind", "#F0802C"],
-                  5: ["Thordan 2", "#073029"],
-                  6: ["N&H", "#39C6B6"],
-                  7: ["El Thordan", "#DFD624"]
-                  }
-          }
+fights = {"dsr": [
+    {"encounter": "1065"},
+    {1: ["A&C&G", "#EF9958"],
+     2: ["Thordan 1", "#62C562"],
+     3: ["Nidhogg", "#E20000"],
+     4: ["Eyes", "#D4F5EF"],
+     4.5: ["Rewind", "#F0802C"],
+     5: ["Thordan 2", "#073029"],
+     6: ["N&H", "#39C6B6"],
+     7: ["El Thordan", "#DFD624"]}
+    ],
+    "tea": [
+        {"encounter": "1062"},
+        {1: ["PepsiMan", "#036BFC"],
+         1.5: ["Limit Cut", "#ED6C4C"],
+         2: ["BJ&CC", "#92D132"],
+         2.5: ["Temp. Stasis", "#BAC9A3"],
+         3: ["Alex Prime", "#F7EA54"],
+         4: ["Perfect Alex", "#FCE3F8"]}
+    ],
+    "ucob": [
+        {"encounter": "1060"},
+        {1: ["Twintania", "#0B7533"],
+         2: ["Nael", "#9D5EDB"],
+         3: ["Bahamut", "#5EB6DB"],
+         4: ["T&N", "#E62E25"],
+         5: ["Golden Bahamut", "#F5E31D"]}
+    ],
+    "uwu": [
+        {"encounter": "1061"},
+        {1: ["Garuda", "#169E18"],
+         2: ["Ifrit", "#F03611"],
+         3: ["Titan", "#91790F"],
+         4: ["Magitek bits", "#A3A093"],
+         5: ["Ultima", "#3BF2F5"]}
+    ]
+}
 servers_requesting = {}
 """
-Used as a "cache" storing servers dark_theme preference and logs uploaded during the last session.
+Used as a "cache" storing servers color_theme preference and logs uploaded during the last session.
 
 servers_requesting = {
                      (str)server_id: {
-                                     (str)"dark_theme": (bool)True/False,
+                                     (str)"encounter": None/(str)"ucob"/"uwu"/"tea"/"dsr"/...,
+                                     (str)"color_theme": (str)"default"/"dark_background",
                                      (array of str)"urls": [(str)url1, (str)url2, ...],
                                      ...
                                      }
@@ -280,24 +311,27 @@ async def on_ready():
 
     for guild in bot.guilds:
         print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
-    print("####################################\n")
 
     try:
         with open(os.getcwd() + r"\servers.json", "r") as f:
-            servers = json.load(f)
+            servers = json.loads(f.read())
             print(servers)
     except OSError:
         print("Error during server.json loading.")
+
+    print("####################################\n")
 
 
 @bot.command()
 async def help(ctx):
     await ctx.send("This bot allows you to transform your log(s) into bar and pie charts in order to have a better "
-                   "view of how your session was.\n\nFirst of all, make sure to have loaded in the logs you want to "
-                   "analyze through **%load**.\n\nExample: %load https://www.fflogs.com/reports/0123456789abcdef/,"
-                   "https://www.fflogs.com/reports/abcdef0123456789/\nYou have loaded your logs correctly if you "
-                   "receive the message `Logs correctly loaded.`\n\nYou can now decide what kind of chart you want "
-                   "the bot to print based on your preferences. If you are interested in an individual view for each "
+                   "view of how your session was.\n\nFirst of all, load the logs you want to "
+                   "analyze through **%load**.\nExample: %load https://www.fflogs.com/reports/0123456789abcdef/,"
+                   "https://www.fflogs.com/reports/abcdef0123456789/\n\nYou have loaded your logs correctly if you "
+                   "receive the message `Logs correctly loaded.`You have to now set the encounter you want to "
+                   "analyze using **%encounter**.\nExample: %encounter dsr\n\nThe fights you can choose between are "
+                   "**ucob**, **uwu**, **tea** and **dsr**.\n\nYou can now decide what kind of chart you want "
+                   "to create. If you are interested in an individual view for each "
                    "log you loaded you may want to use _single_(s) charts while if you are interested in an "
                    "aggregate view of all the logs you loaded you may want to use _multi_(m) charts.\n\n**Single**\n"
                    "**%plot s_bar**: bar chart for each log uploaded showing for each pull what was its pull length "
@@ -306,28 +340,45 @@ async def help(ctx):
                    "loaded logs showing for each pull what was its pull length and wipe phase.\n"
                    "**%plot m_bar_compact**: bar chart showing for each day the amount of wipe pulls for each phase.\n"
                    "**%plot m_pie**: pie chart for all loaded logs showing the percentage of time (in minutes) spent "
-                   "for each phase.\n\nIn case you want the charts to be created using dark theme, you can enable that"
-                   " through the command **%dark_theme enabled**. In case you want to go back to light theme charts "
-                   "you can do that through **%dark_theme disabled**.\n\n\nFor more info and image examples for each "
+                   "for each phase.\n\nThe bot currently allows you to create charts using both light, "
+                   "**%color_theme light**, and dark, **%color_theme dark** theme. \n\n\n"
+                   "For more info and image examples for each "
                    "chart you can check the GitHub page of the bot: github.com/SacchXN/Tergicristalli\nBot invite link:"
                    " https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot"
-                   "\nIn case of any issues with the bot feel free to dm Sekkeisha#5511")
+                   "\nIn case you have any suggestions for adding new functionalities to the bot or any issues with "
+                   "it, feel free to dm Sekkeisha#5511")
 
 
 @bot.command()
-async def dark_theme(ctx, arg):
+async def color_theme(ctx, arg):
     with open(os.getcwd() + r"\servers.json", "r") as f:
         servers = json.load(f)
-    if arg == 'enabled':
-        servers[str(ctx.guild.id)] = True
+    if arg == 'dark':
+        servers[str(ctx.guild.id)][1] = "dark_background"
         if str(ctx.guild.id) in servers_requesting.keys():
-            servers_requesting[str(ctx.guild.id)]["dark_theme"] = True
-        await ctx.send("Dark mode enabled.")
-    elif arg == 'disabled':
-        servers[str(ctx.guild.id)] = False
+            servers_requesting[str(ctx.guild.id)]["color_theme"] = "dark_background"
+        await ctx.send("Dark theme has been set.")
+    elif arg == 'light':
+        servers[str(ctx.guild.id)][1] = "default"
         if str(ctx.guild.id) in servers_requesting.keys():
-            servers_requesting[str(ctx.guild.id)]["dark_theme"] = False
-        await ctx.send("Dark mode disabled.")
+            servers_requesting[str(ctx.guild.id)]["color_theme"] = "default"
+        await ctx.send("Light theme has been set.")
+    else:
+        await ctx.send("Parameter used is not correct.")
+    with open(os.getcwd() + r"\servers.json", "w") as f:
+        json.dump(servers, f)
+
+
+@bot.command()
+async def encounter(ctx, arg):
+    print(servers_requesting)
+    with open(os.getcwd() + r"\servers.json", "r") as f:
+        servers = json.load(f)
+    if arg in fights.keys():
+        servers[str(ctx.guild.id)][0] = arg
+        if str(ctx.guild.id) in servers_requesting.keys():
+            servers_requesting[str(ctx.guild.id)]["encounter"] = arg
+        await ctx.send("Encounter has been set.")
     else:
         await ctx.send("Parameter used is not correct.")
     with open(os.getcwd() + r"\servers.json", "w") as f:
@@ -342,7 +393,7 @@ async def on_guild_join(guild):
             servers = json.load(f)
             f.seek(0)
             f.truncate()
-            servers[str(guild.id)] = False
+            servers[str(guild.id)] = [None, "default"]
             json.dump(servers, f)
     except OSError:
         print("Error during server.json loading.")
@@ -377,7 +428,14 @@ async def load(ctx, arg=None):
         if ctx.guild.id not in servers_requesting.keys():
             with open(os.getcwd() + r"\servers.json", "r") as f:
                 servers = json.load(f)
-                servers_requesting[str(ctx.guild.id)] = dict({"dark_theme": servers[str(ctx.guild.id)], "urls": None})
+                if str(ctx.guild.id) not in servers.keys():
+                    servers[str(ctx.guild.id)] = [None, "default"]
+                    servers_requesting[str(ctx.guild.id)] = dict({"encounter": None, "color_theme": "default",
+                                                                  "urls": None})
+                    json.dump(servers, f)
+                servers_requesting[str(ctx.guild.id)] = dict({"encounter": servers[str(ctx.guild.id)][0],
+                                                              "color_theme": servers[str(ctx.guild.id)][1],
+                                                              "urls": None})
         # Input validation
         urls = []
         try:
@@ -399,86 +457,107 @@ async def load(ctx, arg=None):
 
         if urls:
             servers_requesting[str(ctx.guild.id)]["urls"] = urls
+            print("Logs correctly loaded.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
             await ctx.send("Logs correctly loaded.")
     else:
-        await ctx.send("No urls have been inserted.")
+        print("No logs have been inserted.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
+        await ctx.send("No logs have been inserted.")
 
 
 @bot.command()
 async def plot(ctx, arg=None):
-    if servers_requesting[str(ctx.guild.id)]["urls"] is not None:
-        if arg is not None:
-            logs = {}
-            """
-            logs = {
-                   (str)"day": {
-                               (int)pull_number: [(int)phase wiped on, (int)pull length in seconds],
-                               ...
-                               }
-                   ...
-                   }
-            """
-            files = []
-            # Extracts data from the urls.
-            try:
-                for item in servers_requesting[str(ctx.guild.id)]["urls"]:
-                    day, pulls = get_pulls(item)
-                    # Check in case two logs from the same day are being provided and in case merge them.
-                    if day not in logs.keys():
-                        logs[day] = {k: v for k, v in enumerate(pulls, start=1)}
-                    else:
-                        for k, v in enumerate(pulls, start=max(p for p in logs[day].keys())+1):
-                            logs[day][k] = v
-            except TypeError as e:
-                print("EXCEPTION API error: {}".format(e))
-                await ctx.send("Log code not valid")
-            # Set dark_theme or not.
-            if servers_requesting[str(ctx.guild.id)]["dark_theme"]:
-                plt.style.use('dark_background')
+    if servers_requesting[str(ctx.guild.id)]["encounter"] is not None:
+        if servers_requesting[str(ctx.guild.id)]["urls"] is not None:
+            if arg is not None:
+                logs = {}
+                """
+                logs = {
+                       (str)"day": {
+                                   (int)pull_number: [(int)phase wiped on, (int)pull length in seconds],
+                                   ...
+                                   }
+                       ...
+                       }
+                """
+                files = []
+
+                # Extracts data from the urls.
+                try:
+                    for item in servers_requesting[str(ctx.guild.id)]["urls"]:
+                        day, pulls = get_pulls(item,
+                                               fights[servers_requesting[str(ctx.guild.id)]["encounter"]][0][
+                                                   "encounter"])
+                        # Check in case two logs from the same day are being provided and in case merge them.
+                        if day not in logs.keys():
+                            logs[day] = {k: v for k, v in enumerate(pulls, start=1)}
+                        else:
+                            for k, v in enumerate(pulls, start=max(p for p in logs[day].keys()) + 1):
+                                logs[day][k] = v
+                except TypeError as e:
+                    print("EXCEPTION API error: {}".format(e))
+                    await ctx.send("Log code not valid")
+
+                # Set color_theme or not.
+                plt.style.use(servers_requesting[str(ctx.guild.id)]["color_theme"])
+
+                # Chart choice.
+                match arg:
+                    case 's_bar':
+                        print("Single bar chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        try:
+                            for day in list(logs.keys()):
+                                files.append(single_bar(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
+                                                        day, logs[day]))
+                        except Exception as e:
+                            print("EXCEPTION Single Bar: {}".format(e))
+                            await ctx.send("Error occurred during single bar chart printing.")
+                    case 's_pie':
+                        print("Single pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        partial_mins = partial_time(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1], logs)
+                        try:
+                            for day in partial_mins.keys():
+                                files.append(pie_single(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
+                                                        day, partial_mins[day]))
+                        except Exception as e:
+                            print("EXCEPTION Single Pie: {}".format(e))
+                            await ctx.send("Error occurred during single pie chart printing.")
+                    case 'm_bar_compact':
+                        print("Multi bar compact chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id,
+                                                                                                  ctx.author))
+                        try:
+                            files.append(multi_bar_compact(
+                                fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1], list(logs.keys()), logs))
+                        except Exception as e:
+                            print("EXCEPTION Multi Bar Compact: {}".format(e))
+                            await ctx.send("Error occurred during bar multi chart printing.")
+                    case 'm_bar_split':
+                        print("Multi bar split chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id,
+                                                                                                ctx.author))
+                        try:
+                            files.append(multi_bar_split(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
+                                                         list(logs.keys()), logs))
+                        except Exception as e:
+                            print("EXCEPTION Multi Bar Split: {}".format(e))
+                            await ctx.send("Error occurred during bar multi chart printing.")
+                    case 'm_pie':
+                        print("Multi pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        total_mins = total_time(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1], logs)
+                        try:
+                            files.append(multi_pie(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
+                                                   total_mins))
+                        except Exception as e:
+                            print("EXCEPTION Pie Multi: {}".format(e))
+                            await ctx.send("Error occurred during pie multi chart printing.")
+                for item in files:
+                    await ctx.send(file=discord.File(item, 'picture.png'))
             else:
-                plt.style.use('default')
-            # Chart choice.
-            match arg:
-                case 's_bar':
-                    try:
-                        for day in list(logs.keys()):
-                            files.append(single_bar(fights["dsr"], day, logs[day]))
-                    except Exception as e:
-                        print("EXCEPTION Single Bar: {}".format(e))
-                        await ctx.send("Error occurred during single bar chart printing.")
-                case 's_pie':
-                    partial_mins = partial_time(fights["dsr"], logs)
-                    try:
-                        for day in partial_mins.keys():
-                            files.append(pie_single(fights["dsr"], day, partial_mins[day]))
-                    except Exception as e:
-                        print("EXCEPTION Single Pie: {}".format(e))
-                        await ctx.send("Error occurred during single pie chart printing.")
-                case 'm_bar_compact':
-                    try:
-                        files.append(multi_bar_compact(fights["dsr"], list(logs.keys()), logs))
-                    except Exception as e:
-                        print("EXCEPTION Multi Bar Compact: {}".format(e))
-                        await ctx.send("Error occurred during bar multi chart printing.")
-                case 'm_bar_split':
-                    try:
-                        files.append(multi_bar_split(fights["dsr"], list(logs.keys()), logs))
-                    except Exception as e:
-                        print("EXCEPTION Multi Bar Split: {}".format(e))
-                        await ctx.send("Error occurred during bar multi chart printing.")
-                case 'm_pie':
-                    total_mins = total_time(fights["dsr"], logs)
-                    try:
-                        files.append(multi_pie(fights["dsr"], total_mins))
-                    except Exception as e:
-                        print("EXCEPTION Pie Multi: {}".format(e))
-                        await ctx.send("Error occurred during pie multi chart printing.")
-            for item in files:
-                await ctx.send(file=discord.File(item, 'picture.png'))
+                await ctx.send(
+                    "No chart command has been selected.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
         else:
-            await ctx.send("No chart command has been selected.")
+            await ctx.send(
+                "Current server has no logs loaded.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
     else:
-        await ctx.send("Current server has no urls loaded.")
+        await ctx.send("Current server has no encountered selected.")
 
 
 bot.run(TOKEN)
