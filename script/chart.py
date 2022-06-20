@@ -29,7 +29,9 @@ def get_pulls(log, encounter_id):
     data = res.read()
 
     dec = json.loads(data.decode("utf-8"))
-
+    if not dec["data"]["reportData"]["report"]["fights"]:
+        raise Exception("One or more logs inserted have no pulls or the pulls in the log don't match the "
+                        "selected encounter.")
     pulls = []
 
     date = dec["data"]["reportData"]["report"]["startTime"]
@@ -159,7 +161,6 @@ def pulls_length(fight, day, pull_time, dark_mode):
 def multi_bar_compact(fight, days, pulls):
     # For each phase there is an array of value whose elements are the number of wipes in that phase and the indeces
     # are the days in the logs given order.
-
     p = {phase: [] for phase in fight.keys()}
     for day in pulls.keys():
         for phase in fight.keys():
@@ -168,12 +169,20 @@ def multi_bar_compact(fight, days, pulls):
     days_number = np.arange(1, len(days) + 1, 1)
 
     prog_point = 0
+    total_time_spent = 0
+    total_pull = 0
     for day in pulls.keys():
         prog_point = max(prog_point, max([pull[0] for pull in pulls[day].values()]))
+        total_time_spent += sum([pull[1] for pull in pulls[day].values()])
+        total_pull += len(pulls[day])
     fights_filtered = {k: v for k, v in fight.items() if k <= prog_point}
 
     fig, chart = plt.subplots(1, 1, figsize=(max(2 * len(days), 7), 5))
     fig.set_tight_layout(True)
+    plt.text(0, 1.02, "Total time: {}:{}\nTotal pulls: {}".format(str(round(total_time_spent / 3600)),
+                                                                  str(round(total_time_spent % 60)),
+                                                                  str(total_pull)), fontsize=10,
+             transform=chart.transAxes)
 
     for offset, phase in zip(np.arange(-0.4, 0.4, 0.1), fights_filtered.keys()):
         chart.bar(days_number + offset, p[phase], width=0.1, color=fights_filtered[phase][1])
@@ -200,12 +209,20 @@ def multi_bar_split(fight, days, pulls):
         days_number[y] = ((len(pulls[y]) + len(pulls[x])) / 10) + days_number[x]
 
     prog_point = 0
+    total_time_spent = 0
+    total_pull = 0
     for day in pulls.keys():
         prog_point = max(prog_point, max([pull[0] for pull in pulls[day].values()]))
+        total_time_spent += sum([pull[1] for pull in pulls[day].values()])
+        total_pull += len(pulls[day])
+
     fights_filtered = {k: v for k, v in fight.items() if k <= prog_point}
     fig, chart = plt.subplots(1, 1, figsize=(max(2 * len(days), 7), 5))
     fig.set_tight_layout(True)
-
+    plt.text(0, 1.02, "Total time: {}:{}\nTotal pulls: {}".format(str(round(total_time_spent / 3600)),
+                                                                  str(round(total_time_spent % 60)),
+                                                                  str(total_pull)), fontsize=10,
+             transform=chart.transAxes)
     for day in days_number:
         for offset, pull in zip(np.arange(-0.175 * (len(pulls[day])) / 2, 0.175 * (len(pulls[day])) / 2, 0.175),
                                 [p for p in pulls[day].values()]):
@@ -257,7 +274,7 @@ fights = {"dsr": [
      5: ["Thordan 2", "#073029"],
      6: ["N&H", "#39C6B6"],
      7: ["El Thordan", "#DFD624"]}
-    ],
+],
     "tea": [
         {"encounter": "1062"},
         {1: ["PepsiMan", "#036BFC"],
@@ -327,23 +344,25 @@ async def help(ctx):
     await ctx.send("This bot allows you to transform your log(s) into bar and pie charts in order to have a better "
                    "view of how your session was.\n\nFirst of all, load the logs you want to "
                    "analyze through **%load**.\nExample: %load https://www.fflogs.com/reports/0123456789abcdef/,"
-                   "https://www.fflogs.com/reports/abcdef0123456789/\n\nYou have loaded your logs correctly if you "
-                   "receive the message `Logs correctly loaded.`You have to now set the encounter you want to "
-                   "analyze using **%encounter**.\nExample: %encounter dsr\n\nThe fights you can choose between are "
+                   "https://www.fflogs.com/reports/abcdef0123456789/\n\nThe bot has read the logs url(s) if you "
+                   "receive the message `Logs url(s) have been read.`You have to now set the encounter you want to "
+                   "analyze using **%encounter**. Unless you want to change fight to analyze you don't have to set "
+                   "this value everytime since it is stored by the bot.\nExample: %encounter dsr\nThe fights you "
+                   "can choose between are "
                    "**ucob**, **uwu**, **tea** and **dsr**.\n\nYou can now decide what kind of chart you want "
-                   "to create. If you are interested in an individual view for each "
-                   "log you loaded you may want to use _single_(s) charts while if you are interested in an "
-                   "aggregate view of all the logs you loaded you may want to use _multi_(m) charts.\n\n**Single**\n"
+                   "to create: _single_(s) for individual view for each log and _multi_(m) for an aggregate view."
+                   "\n\n**Single**\n"
                    "**%plot s_bar**: bar chart for each log uploaded showing for each pull what was its pull length "
                    "and wipe phase.\n**%plot s_pie**: pie chart for each log uploaded showing the percentage of time "
                    "(in minutes) spent for each phase.\n\n**Multi**\n**%plot m_bar_split**: bar chart for all "
                    "loaded logs showing for each pull what was its pull length and wipe phase.\n"
                    "**%plot m_bar_compact**: bar chart showing for each day the amount of wipe pulls for each phase.\n"
                    "**%plot m_pie**: pie chart for all loaded logs showing the percentage of time (in minutes) spent "
-                   "for each phase.\n\nThe bot currently allows you to create charts using both light, "
-                   "**%color_theme light**, and dark, **%color_theme dark** theme. \n\n\n"
-                   "For more info and image examples for each "
-                   "chart you can check the GitHub page of the bot: github.com/SacchXN/Tergicristalli\nBot invite link:"
+                   "for each phase.\n**m_bar_compact** and **m_bar_split** also show the amount of total pulls and"
+                   " time spent.\n\nThe bot currently allows you to create charts using both light, "
+                   "**%color_theme light**, and dark, **%color_theme dark** theme.")
+    await ctx.send("For more info and image examples for each chart you can check the GitHub page of the bot: "
+                   "https://github.com/SacchXN/Tergicristalli\nBot invite link:"
                    " https://discord.com/api/oauth2/authorize?client_id=979718043993247774&permissions=35840&scope=bot"
                    "\nIn case you have any suggestions for adding new functionalities to the bot or any issues with "
                    "it, feel free to dm Sekkeisha#5511")
@@ -371,7 +390,6 @@ async def color_theme(ctx, arg):
 
 @bot.command()
 async def encounter(ctx, arg):
-    print(servers_requesting)
     with open(os.getcwd() + r"\servers.json", "r") as f:
         servers = json.load(f)
     if arg in fights.keys():
@@ -458,10 +476,10 @@ async def load(ctx, arg=None):
         if urls:
             servers_requesting[str(ctx.guild.id)]["urls"] = urls
             print("Logs correctly loaded.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
-            await ctx.send("Logs correctly loaded.")
+            await ctx.send("Logs urls(s) have been read.")
     else:
         print("No logs have been inserted.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
-        await ctx.send("No logs have been inserted.")
+        await ctx.send("No logs urls(s) have been inserted.")
 
 
 @bot.command()
@@ -480,7 +498,6 @@ async def plot(ctx, arg=None):
                        }
                 """
                 files = []
-
                 # Extracts data from the urls.
                 try:
                     for item in servers_requesting[str(ctx.guild.id)]["urls"]:
@@ -493,9 +510,10 @@ async def plot(ctx, arg=None):
                         else:
                             for k, v in enumerate(pulls, start=max(p for p in logs[day].keys()) + 1):
                                 logs[day][k] = v
-                except TypeError as e:
+                except Exception as e:
                     print("EXCEPTION API error: {}".format(e))
-                    await ctx.send("Log code not valid")
+                    await ctx.send(e)
+                    arg = "error"
 
                 # Set color_theme or not.
                 plt.style.use(servers_requesting[str(ctx.guild.id)]["color_theme"])
@@ -503,7 +521,7 @@ async def plot(ctx, arg=None):
                 # Chart choice.
                 match arg:
                     case 's_bar':
-                        print("Single bar chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        print("Single bar chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
                         try:
                             for day in list(logs.keys()):
                                 files.append(single_bar(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
@@ -512,7 +530,7 @@ async def plot(ctx, arg=None):
                             print("EXCEPTION Single Bar: {}".format(e))
                             await ctx.send("Error occurred during single bar chart printing.")
                     case 's_pie':
-                        print("Single pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        print("Single pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
                         partial_mins = partial_time(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1], logs)
                         try:
                             for day in partial_mins.keys():
@@ -522,7 +540,7 @@ async def plot(ctx, arg=None):
                             print("EXCEPTION Single Pie: {}".format(e))
                             await ctx.send("Error occurred during single pie chart printing.")
                     case 'm_bar_compact':
-                        print("Multi bar compact chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id,
+                        print("Multi bar compact chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name,
                                                                                                   ctx.author))
                         try:
                             files.append(multi_bar_compact(
@@ -531,7 +549,7 @@ async def plot(ctx, arg=None):
                             print("EXCEPTION Multi Bar Compact: {}".format(e))
                             await ctx.send("Error occurred during bar multi chart printing.")
                     case 'm_bar_split':
-                        print("Multi bar split chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id,
+                        print("Multi bar split chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name,
                                                                                                 ctx.author))
                         try:
                             files.append(multi_bar_split(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
@@ -540,7 +558,7 @@ async def plot(ctx, arg=None):
                             print("EXCEPTION Multi Bar Split: {}".format(e))
                             await ctx.send("Error occurred during bar multi chart printing.")
                     case 'm_pie':
-                        print("Multi pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.id, ctx.author))
+                        print("Multi pie chart request.\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
                         total_mins = total_time(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1], logs)
                         try:
                             files.append(multi_pie(fights[servers_requesting[str(ctx.guild.id)]["encounter"]][1],
@@ -548,6 +566,9 @@ async def plot(ctx, arg=None):
                         except Exception as e:
                             print("EXCEPTION Pie Multi: {}".format(e))
                             await ctx.send("Error occurred during pie multi chart printing.")
+                    case _:
+                        print("Error in get_pulls.\n")
+                        await ctx.send("Retry.")
                 for item in files:
                     await ctx.send(file=discord.File(item, 'picture.png'))
             else:
