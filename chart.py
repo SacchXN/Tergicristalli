@@ -330,7 +330,7 @@ async def on_ready():
         print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
 
 #try:
-    with open(os.getcwd() + r"\servers.json", "r") as f:
+    with open(os.getcwd() + "/servers.json", "r") as f:
         servers = json.loads(f.read())
         print(servers)
 #except OSError:
