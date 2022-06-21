@@ -1,1 +1,1 @@
-web: python chart.py
+worker: python script/chart.py
