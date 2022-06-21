@@ -1,1 +1,1 @@
-worker: node chart.py
+worker: python chart.py
