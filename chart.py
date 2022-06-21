@@ -329,12 +329,12 @@ async def on_ready():
     for guild in bot.guilds:
         print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
 
-    try:
-        with open(os.getcwd() + r"\servers.json", "r") as f:
-            servers = json.loads(f.read())
-            print(servers)
-    except OSError:
-        print("Error during server.json loading.")
+#try:
+    with open(os.getcwd() + r"\servers.json", "r") as f:
+        servers = json.loads(f.read())
+        print(servers)
+#except OSError:
+    #print("Error during server.json loading.")
 
     print("####################################\n")
 
