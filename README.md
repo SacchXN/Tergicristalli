@@ -6,7 +6,7 @@ Tergicristalli is a bot that allows you to transform your log(s) into bar and pi
 ### How to use
 The command **%load** allows you to load the logs you want to analyze.\
 Example: %load https://www.fflogs.com/reports/0123456789abcdef/,https://www.fflogs.com/reports/abcdef0123456789/ \
-Once the bot replies with "*Logs correctly loaded.*" you can now select what fight you want to analyze using **%encounter**.\
+Once the bot replies with "*Logs url(s) have been read.*" you can now select what fight you want to analyze using **%encounter**. Unless you want to change fight to analyze you don't have to set this value everytime since it is stored by the bot.\
 Example: %encounter dsr \
 You can choose between **ucob**, **uwu**, **tea** and **dsr**. It is now possible to decide what chart you want to create.
 
@@ -20,11 +20,11 @@ Pie chart for each log uploaded showing the percentage of time (in minutes) spen
 
 #### %plot m_bar_split
 Bar chart for all loaded logs showing for each pull what was its pull length and wipe phase.
-![picture](https://user-images.githubusercontent.com/106769040/174461530-4977b472-3c45-4727-a242-651fd3eaa964.png)
+![picture](https://user-images.githubusercontent.com/106769040/174689735-ce0e492e-7f11-4a20-9228-d42455b39dfa.png)
 
 #### %plot m_bar_compact
 Bar chart showing for each day the amount of wipe pulls for each phase.
-![picture](https://user-images.githubusercontent.com/106769040/174461963-fc6389d9-0012-4a39-a426-601051e139e1.png)
+![picture](https://user-images.githubusercontent.com/106769040/174689719-a00d7a1f-addf-46a4-a177-5a0b24783229.png)
 
 #### %plot m_pie
 Pie chart for all loaded logs showing the percentage of time (in minutes) spent for each phase.
