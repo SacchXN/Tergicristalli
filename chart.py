@@ -329,12 +329,12 @@ async def on_ready():
     for guild in bot.guilds:
         print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
 
-#try:
-    with open(os.getcwd() + "/servers.json", "r") as f:
-        servers = json.loads(f.read())
-        print(servers)
-#except OSError:
-    #print("Error during server.json loading.")
+    try:
+        with open(os.getcwd() + "/servers.json", "r") as f:
+            servers = json.loads(f.read())
+            print(servers)
+    except OSError:
+        print("Error during server.json loading.")
 
     print("####################################\n")
 
@@ -370,7 +370,7 @@ async def help(ctx):
 
 @bot.command()
 async def color_theme(ctx, arg):
-    with open(os.getcwd() + r"\servers.json", "r") as f:
+    with open(os.getcwd() + "/servers.json", "r") as f:
         servers = json.load(f)
     if arg == 'dark':
         servers[str(ctx.guild.id)][1] = "dark_background"
@@ -384,13 +384,13 @@ async def color_theme(ctx, arg):
         await ctx.send("Light theme has been set.")
     else:
         await ctx.send("Parameter used is not correct.")
-    with open(os.getcwd() + r"\servers.json", "w") as f:
+    with open(os.getcwd() + "/servers.json", "w") as f:
         json.dump(servers, f)
 
 
 @bot.command()
 async def encounter(ctx, arg):
-    with open(os.getcwd() + r"\servers.json", "r") as f:
+    with open(os.getcwd() + "/servers.json", "r") as f:
         servers = json.load(f)
     if arg in fights.keys():
         servers[str(ctx.guild.id)][0] = arg
@@ -399,7 +399,7 @@ async def encounter(ctx, arg):
         await ctx.send("Encounter has been set.")
     else:
         await ctx.send("Parameter used is not correct.")
-    with open(os.getcwd() + r"\servers.json", "w") as f:
+    with open(os.getcwd() + "/servers.json", "w") as f:
         json.dump(servers, f)
 
 
@@ -407,7 +407,7 @@ async def encounter(ctx, arg):
 async def on_guild_join(guild):
     print("The server {} has been joined\nAdmin: {}\n\n".format(guild.name, guild.owner))
     try:
-        with open(os.getcwd() + r"\servers.json", "r+") as f:
+        with open(os.getcwd() + "/servers.json", "r+") as f:
             servers = json.load(f)
             f.seek(0)
             f.truncate()
@@ -421,7 +421,7 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     print("Got kicked from {}".format(guild.name))
     try:
-        with open(os.getcwd() + r"\servers.json", "r+") as f:
+        with open(os.getcwd() + "/servers.json", "r+") as f:
             servers = json.load(f)
             f.seek(0)
             f.truncate()
@@ -444,7 +444,7 @@ async def load(ctx, arg=None):
         # Checks if server making a request has already done a request in this bot session. If not, add it to
         # servers_requesting.
         if ctx.guild.id not in servers_requesting.keys():
-            with open(os.getcwd() + r"\servers.json", "r") as f:
+            with open(os.getcwd() + "/servers.json", "r") as f:
                 servers = json.load(f)
                 if str(ctx.guild.id) not in servers.keys():
                     servers[str(ctx.guild.id)] = [None, "default"]
