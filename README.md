@@ -12,25 +12,25 @@ You can choose between **ucob**, **uwu**, **tea** and **dsr**. It is now possibl
 
 #### %plot s_bar
 Bar chart for each log uploaded showing for each pull what was its pull length and wipe phase.
-![picture](https://user-images.githubusercontent.com/106769040/174461487-7eafa9f4-76b6-45bb-9dc2-a8ae692bda46.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111327-47d8f46e-7841-45be-9edc-22de2628fcba.png)
 
 #### %plot s_pie
 Pie chart for each log uploaded showing the percentage of time (in minutes) spent for each phase.
-![picture](https://user-images.githubusercontent.com/106769040/174461505-d8ede59f-844f-4c46-b98a-c6c676eaad75.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111382-b91de90b-4cb3-42eb-b847-840120989bc4.png)
 
 #### %plot m_bar_split
 Bar chart for all loaded logs showing for each pull what was its pull length and wipe phase.
-![picture](https://user-images.githubusercontent.com/106769040/174689735-ce0e492e-7f11-4a20-9228-d42455b39dfa.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111450-fe488c1f-0bf8-4bea-ab62-3f6b232a2c4d.png)
 
 #### %plot m_bar_compact
 Bar chart showing for each day the amount of wipe pulls for each phase.
-![picture](https://user-images.githubusercontent.com/106769040/174689719-a00d7a1f-addf-46a4-a177-5a0b24783229.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111493-b1b9750a-dcc3-4cde-965b-bfafc95ac032.png)
 
 #### %plot m_pie
 Pie chart for all loaded logs showing the percentage of time (in minutes) spent for each phase.
-![picture](https://user-images.githubusercontent.com/106769040/174461982-398a90ee-7ec8-4fcd-8d60-284e98f05107.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111541-ac4062a2-4b32-4cc3-a66e-cf0e0c9b3975.png)
 
 #### Dark theme
-![picture](https://user-images.githubusercontent.com/106769040/174462013-02898ef9-2eb5-4a4a-975b-44560f7f1cd8.png)
-![picture](https://user-images.githubusercontent.com/106769040/174462026-a254fec4-a705-4294-82b9-6ff0e95bec7e.png)
-![picture](https://user-images.githubusercontent.com/106769040/174462027-bcc7671b-1a83-4300-975c-cdfb6fb4eb61.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111717-a3578aee-7227-499f-8b4e-b70f49646d4f.png)
+![picture](https://user-images.githubusercontent.com/106769040/175111756-31dfbf17-89c7-4ce6-8884-e09c5c90c48c.png)
+![picture](https://user-images.githubusercontent.com/106769040/175107620-8d22ede0-0c3d-4330-913e-50324c0a750a.png)
