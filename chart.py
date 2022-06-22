@@ -32,7 +32,7 @@ def get_pulls(log, encounter_id):
     data = res.read()
 
     dec = json.loads(data.decode("utf-8"))
-    if not dec["data"]["reportData"]["report"]["fights"]:
+    if not dec["data"]["reportData"]["report"]:
         raise Exception("One or more logs inserted have no pulls or the pulls in the log don't match the "
                         "selected encounter.")
     pulls = []
