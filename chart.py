@@ -8,11 +8,14 @@ from datetime import datetime
 import io
 import os
 from dotenv import load_dotenv
+import pymongo
 
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 AUTH = os.getenv('AUTH')
+ID = os.getenv('ID')
+PW = os.getenv('PW')
 
 
 def get_pulls(log, encounter_id):
@@ -320,6 +323,8 @@ intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix='%', intents=intents, help_command=None)
 bot.activity = discord.Activity(type=discord.ActivityType.playing, name="%help")
+client = pymongo.MongoClient(
+        "mongodb+srv://{}:{}@clusterc.g5clm.mongodb.net/?retryWrites=true&w=majority".format(ID, PW))
 
 
 @bot.event
@@ -328,14 +333,6 @@ async def on_ready():
 
     for guild in bot.guilds:
         print("Server: {}\nOwner: {}\n".format(guild.name, guild.owner))
-
-    try:
-        with open(os.getcwd() + "/servers.json", "r") as f:
-            servers = json.loads(f.read())
-            print(servers)
-    except OSError:
-        print("Error during server.json loading.")
-
     print("####################################\n")
 
 
@@ -370,65 +367,63 @@ async def help(ctx):
 
 @bot.command()
 async def color_theme(ctx, arg):
-    with open(os.getcwd() + "/servers.json", "r") as f:
-        servers = json.load(f)
     if arg == 'dark':
-        servers[str(ctx.guild.id)][1] = "dark_background"
-        if str(ctx.guild.id) in servers_requesting.keys():
-            servers_requesting[str(ctx.guild.id)]["color_theme"] = "dark_background"
-        await ctx.send("Dark theme has been set.")
+        try:
+            client['tergicristalli']['servers'].update_one({"id": str(ctx.guild.id)}, {"$set": {
+                "settings.color_theme": "dark_background"}})
+            if str(ctx.guild.id) in servers_requesting.keys():
+                servers_requesting[str(ctx.guild.id)]["color_theme"] = "dark_background"
+            await ctx.send("Dark theme has been set.")
+        except Exception:
+            print(Exception)
+            await ctx.send("An error has occurred during color theme selection")
     elif arg == 'light':
-        servers[str(ctx.guild.id)][1] = "default"
-        if str(ctx.guild.id) in servers_requesting.keys():
-            servers_requesting[str(ctx.guild.id)]["color_theme"] = "default"
-        await ctx.send("Light theme has been set.")
+        try:
+            client['tergicristalli']['servers'].update_one({"id": str(ctx.guild.id)}, {"$set": {
+                "settings.color_theme": "default"}})
+            if str(ctx.guild.id) in servers_requesting.keys():
+                servers_requesting[str(ctx.guild.id)]["color_theme"] = "default"
+            await ctx.send("Light theme has been set.")
+        except Exception:
+            print(Exception)
+            await ctx.send("An error has occurred during color theme selection")
     else:
         await ctx.send("Parameter used is not correct.")
-    with open(os.getcwd() + "/servers.json", "w") as f:
-        json.dump(servers, f)
 
 
 @bot.command()
 async def encounter(ctx, arg):
-    with open(os.getcwd() + "/servers.json", "r") as f:
-        servers = json.load(f)
     if arg in fights.keys():
-        servers[str(ctx.guild.id)][0] = arg
-        if str(ctx.guild.id) in servers_requesting.keys():
-            servers_requesting[str(ctx.guild.id)]["encounter"] = arg
+        try:
+            client['tergicristalli']['servers'].update_one({"id": str(ctx.guild.id)}, {"$set": {
+                "settings.encounter": arg}})
+            if str(ctx.guild.id) in servers_requesting.keys():
+                servers_requesting[str(ctx.guild.id)]["encounter"] = arg
+        except Exception:
+            print(Exception)
+            await ctx.send("An error has occurred during encounter selection.")
         await ctx.send("Encounter has been set.")
     else:
         await ctx.send("Parameter used is not correct.")
-    with open(os.getcwd() + "/servers.json", "w") as f:
-        json.dump(servers, f)
 
 
 @bot.event
 async def on_guild_join(guild):
     print("The server {} has been joined\nAdmin: {}\n\n".format(guild.name, guild.owner))
     try:
-        with open(os.getcwd() + "/servers.json", "r+") as f:
-            servers = json.load(f)
-            f.seek(0)
-            f.truncate()
-            servers[str(guild.id)] = [None, "default"]
-            json.dump(servers, f)
-    except OSError:
-        print("Error during server.json loading.")
+        client['tergicristalli']['servers'].insert_one({"id": str(guild.id), "settings": {
+            "encounter": None, "color_theme": "default"}})
+    except Exception:
+        print(Exception)
 
 
 @bot.event
 async def on_guild_remove(guild):
     print("Got kicked from {}".format(guild.name))
     try:
-        with open(os.getcwd() + "/servers.json", "r+") as f:
-            servers = json.load(f)
-            f.seek(0)
-            f.truncate()
-            del servers[str(guild.id)]
-            json.dump(servers, f)
-    except OSError:
-        print("Error during server.json loading.")
+        client['tergicristalli']['servers'].delete_one({"id": str(guild.id)})
+    except Exception:
+        print(Exception)
 
 
 @bot.event
@@ -440,20 +435,33 @@ async def on_command_error(ctx, error):
 @bot.command()
 async def load(ctx, arg=None):
     if arg is not None:
-        print("Request load from\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
-        # Checks if server making a request has already done a request in this bot session. If not, add it to
-        # servers_requesting.
-        if ctx.guild.id not in servers_requesting.keys():
-            with open(os.getcwd() + "/servers.json", "r") as f:
-                servers = json.load(f)
-                if str(ctx.guild.id) not in servers.keys():
-                    servers[str(ctx.guild.id)] = [None, "default"]
+        try:
+            print("Request load from\nServer: {}\nAuthor: {}\n".format(ctx.guild.name, ctx.author))
+            # Checks if server making a request has already done a request in this bot session. If not, add it to
+            # servers_requesting.
+            if ctx.guild.id not in servers_requesting.keys():
+                fltr = {
+                    'id': str(ctx.guild.id)
+                }
+                result = list(client['tergicristalli']['servers'].find(
+                    filter=fltr,
+                ))[0]["settings"]
+                if result:
+                    servers_requesting[str(ctx.guild.id)] = dict({"encounter": result["encounter"],
+                                                                  "color_theme": result["color_theme"],
+                                                                  "urls": None})
+                else:
+                    try:
+                        client['tergicristalli']['servers'].insert_one({"id": str(ctx.guild.id), "settings": {
+                            "encounter": None, "color_theme": "default"}})
+                    except Exception:
+                        print(Exception)
                     servers_requesting[str(ctx.guild.id)] = dict({"encounter": None, "color_theme": "default",
                                                                   "urls": None})
-                    json.dump(servers, f)
-                servers_requesting[str(ctx.guild.id)] = dict({"encounter": servers[str(ctx.guild.id)][0],
-                                                              "color_theme": servers[str(ctx.guild.id)][1],
-                                                              "urls": None})
+        except Exception:
+            print(Exception)
+            await ctx.send("An error occurred during log url(s) reading, retry.")
+
         # Input validation
         urls = []
         try:
