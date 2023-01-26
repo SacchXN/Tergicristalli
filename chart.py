@@ -32,6 +32,7 @@ def get_pulls(log, encounter_id):
     data = res.read()
 
     dec = json.loads(data.decode("utf-8"))
+
     if not dec["data"]["reportData"]["report"]:
         raise Exception("One or more logs inserted have no pulls or the pulls in the log don't match the "
                         "selected encounter.")
@@ -302,8 +303,16 @@ fights = {"dsr": [
          3: ["Titan", "#91790F"],
          4: ["Magitek bits", "#A3A093"],
          5: ["Ultima", "#3BF2F5"]}
-    ]
-}
+    ],
+    "top": [
+        {"encounter": "1068"},
+        {1: ["Omega", "#888888"],
+            2: ["M&F", "#886FE3"],
+            3: ["Final Omega", "#0032D6"]}
+            ]
+    }
+    
+
 servers_requesting = {}
 """
 Used as a "cache" storing servers color_theme preference and logs uploaded during the last session.
@@ -520,7 +529,7 @@ async def plot(ctx, arg=None):
                                 logs[day][k] = v
                 except Exception as e:
                     print("EXCEPTION API error: {}".format(e))
-                    await ctx.send(e)
+                    await ctx.send("There was an error in the log you uploaded.")
                     arg = "error"
 
                 # Set color_theme or not.
