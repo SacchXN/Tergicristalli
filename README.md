@@ -8,7 +8,7 @@ The command **%load** allows you to load the logs you want to analyze.\
 Example: %load https://www.fflogs.com/reports/0123456789abcdef/,https://www.fflogs.com/reports/abcdef0123456789/ \
 Once the bot replies with "*Logs url(s) have been read.*" you can now select what fight you want to analyze using **%encounter**. Unless you want to change fight to analyze you don't have to set this value everytime since it is stored by the bot.\
 Example: %encounter dsr \
-You can choose between **ucob**, **uwu**, **tea** and **dsr**. It is now possible to decide what chart you want to create.
+You can choose between **ucob**, **uwu**, **tea**, **dsr** and **top**. It is now possible to decide what chart you want to create.
 
 #### %plot s_bar
 Bar chart for each log uploaded showing for each pull what was its pull length and wipe phase.
